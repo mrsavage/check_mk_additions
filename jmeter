@@ -21,7 +21,7 @@
 __author__ = 'Hans-Peter Locher <hans-peter.locher@inquant.de>'
 __docformat__ = 'plaintext'
 
-from datetime import datetime
+import datetime
 
 """
 output of shell script::
@@ -71,19 +71,20 @@ def check_jmeter(item, params, info):
             stop = get_time(stop_stamp)
             duration = stop - start
             duration = duration.seconds
+            perfdata = [("duration", duration, warn_duration, crit_duration)]
             if duration < warn_duration:
-                return (0, "OK - duration is %s seconds" % duration)
+                return (0, "OK - duration is %s seconds" % duration, perfdata)
             if duration < crit_duration:
-                return (1, "WARNING - duration is %s seconds" % duration)
+                return (1, "WARNING - duration is %s seconds" % duration, perfdata)
             if duration >= crit_duration:
-                return (2, "CRITICAL - duration is %s seconds" % duration)
+                return (2, "CRITICAL - duration is %s seconds" % duration, perfdata)
             return (3, "UNKNOWN - item %s" % item)
         if line[1] == item: 
             matches = True
     return (3, "UNKNOWN - item %s" % item)
 
 # declare the check to Check_MK 
-check_info['jmeter'] = (check_jmeter, "jmeter_%s", 0, inventory_jmeter) 
+check_info['jmeter'] = (check_jmeter, "jmeter_%s", 1, inventory_jmeter) 
 
 def get_time(stamp):
     """stamp = (1310561523238)
@@ -91,7 +92,7 @@ def get_time(stamp):
     """
     epoch = stamp.strip("()")
     short_epoch = epoch[:10]
-    return datetime.fromtimestamp(float(short_epoch))
+    return datetime.datetime.fromtimestamp(float(short_epoch))
 
 
 # vim: set ft=python ts=4 sw=4 expandtab : 

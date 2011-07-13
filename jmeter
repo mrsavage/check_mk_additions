@@ -1,0 +1,98 @@
+# -*- coding: utf-8 -*-
+#
+# File: jmeter.py
+#
+# Copyright (c) InQuant GmbH
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+__author__ = 'Hans-Peter Locher <hans-peter.locher@inquant.de>'
+__docformat__ = 'plaintext'
+
+from datetime import datetime
+
+"""
+output of shell script::
+
+going_to_run_test_plan jmeter_plans/a_test.jmx
+Creating summariser <summary> Created the tree successfully using jmeter_plans/a_test.jmx Starting the test @ Wed Jul 13 14:52:03 CEST 2011 (1310561523238) Waiting for possible shutdown message on port 4445 summary = 2 in 0.2s = 10.7/s Avg: 90 Min: 61 Max: 120 Err: 0 (0.00%) Tidying up ... @ Wed Jul 13 14:52:03 CEST 2011 (1310561523778) ... end of run
+going to run test plan
+jmeter_plans/another_test.jmx
+"""
+
+jmeter_default_values = {"warn_duration": 10,
+                         "crit_duration": 20, 
+                         "warn_errors": 0,
+                         "crit_errors": 0}
+
+
+# the inventory function 
+def inventory_jmeter(checkname, info): 
+    inventory = [] 
+    # loop over all output lines of the agent 
+    for line in info:
+        if line[0] == "going_to_run_test_plan":
+            testplan = line[1]
+            #1. the item 
+            #2. a comment or an empty string (will be written as a comment into the autochecks file) 
+            #3. the default parameter for the check or None 
+            #print testplan
+            inventory.append((testplan, "", "jmeter_default_values")) 
+    return inventory 
+
+# the check function
+def check_jmeter(item, params, info):
+    #unpack check parameters
+    warn_duration = params["warn_duration"]
+    crit_duration = params["crit_duration"]
+    warn_errors = params["warn_errors"] #not yet implemented
+    crit_errors = params["crit_errors"] # not yet implemented
+    #return (2, "CRITICAL - dimm item is %s , info is %s" % (item, info))
+    matches = False
+    for line in info:
+        if matches:
+            matches = False
+            #compute duration
+            start_stamp = line[line.index("Starting") + 10]
+            stop_stamp = line[-5]
+            start = get_time(start_stamp)
+            stop = get_time(stop_stamp)
+            duration = stop - start
+            duration = duration.seconds
+            if duration < warn_duration:
+                return (0, "OK - duration is %s seconds" % duration)
+            if duration < crit_duration:
+                return (1, "WARNING - duration is %s seconds" % duration)
+            if duration >= crit_duration:
+                return (2, "CRITICAL - duration is %s seconds" % duration)
+            return (3, "UNKNOWN - item %s" % item)
+        if line[1] == item: 
+            matches = True
+    return (3, "UNKNOWN - item %s" % item)
+
+# declare the check to Check_MK 
+check_info['jmeter'] = (check_jmeter, "jmeter_%s", 0, inventory_jmeter) 
+
+def get_time(stamp):
+    """stamp = (1310561523238)
+       returns a datetime object
+    """
+    epoch = stamp.strip("()")
+    short_epoch = epoch[:10]
+    return datetime.fromtimestamp(float(short_epoch))
+
+
+# vim: set ft=python ts=4 sw=4 expandtab : 
+

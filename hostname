@@ -1,0 +1,54 @@
+# -*- coding: utf-8 -*-
+#
+# File: hostname.py
+#
+# Copyright (c) InQuant GmbH
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+__author__ = 'Hans-Peter Locher <hans-peter.locher@inquant.de>'
+__docformat__ = 'plaintext'
+
+hostname_maxlen_default_values = (8, 10)
+
+# the inventory function 
+def inventory_hostname_maxlen(checkname, info): 
+    inventory = [] 
+    # loop over all output lines of the agent 
+    for line in info: 
+        hostname = line[0] 
+        #1. the item 
+        #2. a comment or an empty string (will be written as a comment into the autochecks file) 
+        #3. the default parameter for the check or None 
+        inventory.append((hostname, "", "hostname_maxlen_default_values")) 
+    return inventory 
+
+# the check function
+def check_hostname_maxlen(item, params, info):
+    #unpack check parameters
+    warn, crit = params
+    hlen = len(item)
+    if hlen < warn:
+        return (0, "OK - hostname length is %s" % hlen)
+    if hlen < crit:
+        return (1, "WARNING - hostname length is %s" % hlen)
+    else:
+        return (2, "CRITICAL - hostname length is %s" % hlen)
+
+# declare the check to Check_MK 
+check_info['hostname.maxlen'] = (check_hostname_maxlen, "hostname_max_len_%s", 0, inventory_hostname_maxlen) 
+
+# vim: set ft=python ts=4 sw=4 expandtab : 
+

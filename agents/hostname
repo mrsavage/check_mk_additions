@@ -1,0 +1,4 @@
+#!/bin/sh
+echo '<<<hostname>>>'
+value_hostname=$(hostname)
+echo $value_hostname

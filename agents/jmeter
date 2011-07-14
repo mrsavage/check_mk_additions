@@ -1,0 +1,19 @@
+#!/bin/sh
+# This requires jmeter
+if which jmeter > /dev/null; then
+    plans_dir="jmeter_plans"
+    if [ -d "$plans_dir" ]; then
+        echo "<<<jmeter>>>"
+    fi
+    for file in $plans_dir/*
+    do
+	echo "going_to_run_test_plan $file"
+        jmeter_output=$(jmeter -n -t $file -l /tmp/jmeter_samples.log -j /tmp/jmeter.log -Jsummariser.name=summary -Jsummariser.interval=100 -Jsummariser.out=true)
+        echo $jmeter_output
+    done
+fi
+
+#Created the tree successfully using /Users/hplocher/develop/BRK/project/jmeter/BRK-live.jmx
+#Starting the test @ Wed Jul 13 12:12:38 CEST 2011 (1310551958181)
+#Tidying up ...    @ Wed Jul 13 12:13:20 CEST 2011 (1310552000736)
+#... end of run

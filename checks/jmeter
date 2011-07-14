@@ -52,7 +52,6 @@ def inventory_jmeter(checkname, info):
             #1. the item 
             #2. a comment or an empty string (will be written as a comment into the autochecks file) 
             #3. the default parameter for the check or None 
-            #print testplan
             inventory.append((testplan, "", "jmeter_default_values")) 
     return inventory 
 
@@ -63,7 +62,6 @@ def check_jmeter(item, params, info):
     crit_duration = params["crit_duration"]
     warn_errors = params["warn_errors"]
     crit_errors = params["crit_errors"]
-    #return (2, "CRITICAL - dimm item is %s , info is %s" % (item, info))
     matches = False
     for line in info:
         if matches:

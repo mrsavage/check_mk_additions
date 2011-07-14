@@ -31,11 +31,11 @@ Creating summariser <summary> Created the tree successfully using jmeter_plans/a
 going to run test plan
 jmeter_plans/another_test.jmx
 """
-
+#XXX change to percentages for errors, makes more sense than absolute number of errors
 jmeter_default_values = {"warn_duration": 10,
                          "crit_duration": 20, 
-                         "warn_errors": 0,
-                         "crit_errors": 0}
+                         "warn_errors": 100,
+                         "crit_errors": 200}
 
 
 # the inventory function 
@@ -57,8 +57,8 @@ def check_jmeter(item, params, info):
     #unpack check parameters
     warn_duration = params["warn_duration"]
     crit_duration = params["crit_duration"]
-    warn_errors = params["warn_errors"] #not yet implemented
-    crit_errors = params["crit_errors"] # not yet implemented
+    warn_errors = params["warn_errors"]
+    crit_errors = params["crit_errors"]
     #return (2, "CRITICAL - dimm item is %s , info is %s" % (item, info))
     matches = False
     for line in info:
@@ -71,13 +71,18 @@ def check_jmeter(item, params, info):
             stop = get_time(stop_stamp)
             duration = stop - start
             duration = duration.seconds
-            perfdata = [("duration", duration, warn_duration, crit_duration)]
-            if duration < warn_duration:
-                return (0, "OK - duration is %s seconds" % duration, perfdata)
-            if duration < crit_duration:
-                return (1, "WARNING - duration is %s seconds" % duration, perfdata)
-            if duration >= crit_duration:
-                return (2, "CRITICAL - duration is %s seconds" % duration, perfdata)
+            #compute number of errors
+            errors = line[line.index("summary") + 14] #total number of errors
+            errors = int(errors)
+            perfdata = [("errors", errors, warn_errors, crit_errors),
+                        ("duration", duration, warn_duration, crit_duration)
+                       ]
+            if duration < warn_duration and errors < warn_errors:
+                return (0, "OK - duration is %s seconds with %s occured errors" % (duration, errors), perfdata)
+            if duration < crit_duration and errors < crit_errors:
+                return (1, "WARNING - duration is %s seconds with %s occured errors" % (duration, errors), perfdata)
+            if duration >= crit_duration or errors >= crit_errors:
+                return (2, "CRITICAL - duration is %s seconds with %s occured errors" % (duration, errors), perfdata)
             return (3, "UNKNOWN - item %s" % item)
         if line[1] == item: 
             matches = True

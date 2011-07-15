@@ -1,0 +1,30 @@
+#!/bin/sh
+
+export EDCHOME=./wc_support_files
+export EDCDIR=$EDCHOME/EDCCadMultiUser
+export USERCLASSPATH=$EDCDIR/codebase:$EDCDIR/codebase/contentFCS.jar:$EDCDIR/codebase/ptcCoreFCS.jar:$EDCDIR/codebase/security.jar:$EDCDIR/codebase/wtAppletFCS.jar:$EDCDIR/codebase/log4j-1.2.15.jar:$EDCDIR/codebase/boot.jar log verbosity set BEANSHELL_LOGLEVEL to DEBUG
+export BEANSHELL_LOGLEVEL=DEBUG
+
+
+testplan=$1
+filename=$2
+
+touch $filename.tmp
+echo "going_to_run_test_plan $testplan" > $filename.tmp
+#jmeter -n -t $testplan -l /tmp/jmeter_samples.log -j /tmp/jmeter.log -Jjmeterengine.nongui.port=0 -Jsummariser.name=summary -Jsummariser.interval=100 -Jsummariser.out=true >> $filename.tmp
+
+jmeter -n \
+-t $testplan \
+-q $EDCDIR/bin/edcuser.properties \
+-L jmeter.util.BeanShellTestElement=$BEANSHELL_LOGLEVEL \
+-j /tmp/jmeter.log \
+-l /tmp/jmeter_samples.log \
+-Jjmeterengine.nongui.port=0 \
+-Jsummariser.name=summary \
+-Jsummariser.interval=100 \
+-Jsummariser.out=true \
+-Juser.classpath=$USERCLASSPATH \
+-Jsearch_paths=$EDCDIR/codebase/JDBCListener.jar \
+-Juser.dir=$EDCDIR >> $filename.tmp
+
+mv $filename.tmp $filename.fnsh

@@ -1,19 +1,101 @@
 #!/bin/sh
-# This requires jmeter
+
+#: Title       : jmeter
+#: Date Created: Thu Jul 14 17:54:21 CET 2011
+#: Last Edit   : Thu Jul 14 17:54:21 CET 2011
+#: Author      : Daniel Altiparmak <daniel.altiparmak@inquant.de>
+#: Version     : 1.00
+#: Description : Shell Script running JMeter Testplans for Nagios evaluation
+#: Options     : xxx
+#: Note        : This script requiers JMeter to be installed
+
+# define variables
+plans_dir="../jmeter_plans"
+
+
+# function      : iterate_testplans() 
+# description   : iterates over all testplans in plans_dir and runs jmeter
+#                 loop is controlled by running.txt
+iterate_testplans()
+{
+    touch running.txt
+    for file in $plans_dir/*
+    do
+        run_jmeter $file
+    done
+    rm running.txt
+    mv finished.tmp finished.txt
+}
+
+# function     : run_jmeter()
+# parameter    : $file
+# description  : runs JMeter background process for testplan
+run_jmeter()
+{
+    testplan=$1
+    echo "going_to_run_test_plan $testplan"
+    jmeter_output=$(jmeter -n -t $testplan -l /tmp/jmeter_samples.log -j /tmp/jmeter.log -Jsummariser.name=summary -Jsummariser.interval=100 -Jsummariser.out=true)
+    echo $jmeter_output
+}
+
+# check if jmeter for testplans is already running by checking if file running.txt exists
+# function     : is_running()
+# description  : check if jmeter for testplans is already running by verifying if file running.txt exists
+is_running()
+{
+    if [ -f running.txt ]; then
+        return 0 #paradox, but true
+    else
+        return 1 # false
+    fi
+}
+
+# function     : is_finished()
+# description  : check if jmeter testplans are finished, by checking if file finished.txt exists
+is_finished()
+{
+    if [ -f finished.txt ]; then
+        return 0 # true
+    else
+        return 1 # false
+    fi
+}
+
+#main routine
 if which jmeter > /dev/null; then
-    plans_dir="jmeter_plans"
     if [ -d "$plans_dir" ]; then
         echo "<<<jmeter>>>"
     fi
-    for file in $plans_dir/*
-    do
-	echo "going_to_run_test_plan $file"
-        jmeter_output=$(jmeter -n -t $file -l /tmp/jmeter_samples.log -j /tmp/jmeter.log -Jsummariser.name=summary -Jsummariser.interval=100 -Jsummariser.out=true)
-        echo $jmeter_output
-    done
+
+    if is_running $1; then
+        #iteration of testplans is still running, we can skip
+        if is_finished $1; then
+            # testplans was already are finished in a previous iteration
+            # gernerate output from file
+            cat finished.txt
+            exit 0;
+        fi
+        exit 0;
+
+    else
+        if is_finished $1; then
+            #testplans are finished generate output from file
+            cat finished.txt
+            # restart new iteration
+            iterate_testplans > finished.tmp &
+            exit 0;
+        else
+            #need to start testplan interation
+            iterate_testplans > finished.tmp &
+            exit 0;
+        fi
+    fi
 fi
 
-#Created the tree successfully using /Users/hplocher/develop/BRK/project/jmeter/BRK-live.jmx
+
+
+
+#Created the tree successfully using /Users/hpl cher/develop/BRK/project/jmeter/BRK-live.jmx
 #Starting the test @ Wed Jul 13 12:12:38 CEST 2011 (1310551958181)
 #Tidying up ...    @ Wed Jul 13 12:13:20 CEST 2011 (1310552000736)
 #... end of run

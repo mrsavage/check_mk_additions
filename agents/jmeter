@@ -10,8 +10,8 @@
 #: Note        : This script requiers JMeter to be installed
 
 # define variables
-plans_dir="jmeter_plans"
-
+plans_dir="../jmeter_plans"
+DIRECTORY=$(cd `dirname $0` && pwd)
 
 # function      : iterate_testplans() 
 # description   : iterates over all testplans in plans_dir and runs jmeter
@@ -23,8 +23,6 @@ iterate_testplans()
     do
         run_jmeter $file
     done
-    rm running.txt
-    mv finished.tmp finished.txt
 }
 
 # function     : run_jmeter()
@@ -33,9 +31,8 @@ iterate_testplans()
 run_jmeter()
 {
     testplan=$1
-    echo "going_to_run_test_plan $testplan"
-    jmeter_output=$(jmeter -n -t $testplan -l /tmp/jmeter_samples.log -j /tmp/jmeter.log -Jsummariser.name=summary -Jsummariser.interval=100 -Jsummariser.out=true)
-    echo $jmeter_output
+    filename=`basename $testplan`
+    $DIRECTORY/jmeter_runner $testplan $filename &
 }
 
 # check if jmeter for testplans is already running by checking if file running.txt exists
@@ -44,9 +41,11 @@ run_jmeter()
 is_running()
 {
     if [ -f running.txt ]; then
-        return 0 #paradox, but true
+        #echo "running.txt exists"
+        return 0 #returncode true => is running
     else
-        return 1 # false
+        #echo "no running.txt exists"
+        return 1 # returncode false => is not running
     fi
 }
 
@@ -54,52 +53,42 @@ is_running()
 # description  : check if jmeter testplans are finished, by checking if file finished.txt exists
 is_finished()
 {
-    if [ -f finished.txt ]; then
-        return 0 # true
+    # if any tmp files exist, a tesptlan is still running
+    if [ -e *.tmp ]; then
+        #echo "tmp file exists, plans are running"
+        return 1 # returncode true => is not finished
     else
-        return 1 # false
+        return 0 # returncode false => is finished
     fi
 }
 
+
 #main routine
 if which jmeter > /dev/null; then
-    if [ -d "$plans_dir" ]; then
-        echo "<<<jmeter>>>"
-    else
-        exit 0;
-    fi
-
+    
     if is_running $1; then
-        #iteration of testplans is still running, we can skip
         if is_finished $1; then
-            # testplans was already are finished in a previous iteration
-            # gernerate output from file
-            cat finished.txt
-            exit 0;
-        fi
-        exit 0;
-
-    else
-        if is_finished $1; then
-            #testplans are finished generate output from file
-            cat finished.txt
-            # restart new iteration
-            #does this execute in an other process?
-            (iterate_testplans > finished.tmp &)
-            exit 0;
+            #echo "is finished"
+            #echo "we cann remove running.txt"
+            cat *.fnsh > output.txt
+            rm *.fnsh
+            rm running.txt
+            echo "<<<jmeter>>>"
+            cat output.txt
         else
-            #need to start testplan interation
-            #does this execute in an other process?
-            (iterate_testplans > finished.tmp &)
-            exit 0;
+            echo "<<<jmeter>>>"
+            if [ -f output.txt ]; then
+                cat output.txt
+            fi
         fi
+    else
+        
+        if [ -f output.txt ]; then
+            echo "<<<jmeter>>>"
+            cat output.txt
+        fi
+
+        iterate_testplans
+        exit 0;
     fi
 fi
-
-
-
-
-#Created the tree successfully using /Users/hpl cher/develop/BRK/project/jmeter/BRK-live.jmx
-#Starting the test @ Wed Jul 13 12:12:38 CEST 2011 (1310551958181)
-#Tidying up ...    @ Wed Jul 13 12:13:20 CEST 2011 (1310552000736)
-#... end of run

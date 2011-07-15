@@ -10,7 +10,7 @@
 #: Note        : This script requiers JMeter to be installed
 
 # define variables
-plans_dir="../jmeter_plans"
+plans_dir="jmeter_plans"
 
 
 # function      : iterate_testplans() 
@@ -65,6 +65,8 @@ is_finished()
 if which jmeter > /dev/null; then
     if [ -d "$plans_dir" ]; then
         echo "<<<jmeter>>>"
+    else
+        exit 0;
     fi
 
     if is_running $1; then
@@ -82,11 +84,13 @@ if which jmeter > /dev/null; then
             #testplans are finished generate output from file
             cat finished.txt
             # restart new iteration
-            iterate_testplans > finished.tmp &
+            #does this execute in an other process?
+            (iterate_testplans > finished.tmp &)
             exit 0;
         else
             #need to start testplan interation
-            iterate_testplans > finished.tmp &
+            #does this execute in an other process?
+            (iterate_testplans > finished.tmp &)
             exit 0;
         fi
     fi

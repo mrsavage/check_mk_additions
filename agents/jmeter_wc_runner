@@ -12,8 +12,7 @@ filename=$2
 touch $filename.tmp
 echo "going_to_run_test_plan $testplan" > $filename.tmp
 #jmeter -n -t $testplan -l /tmp/jmeter_samples.log -j /tmp/jmeter.log -Jjmeterengine.nongui.port=0 -Jsummariser.name=summary -Jsummariser.interval=100 -Jsummariser.out=true >> $filename.tmp
-
-jmeter -n \
+jmeter_output=$(jmeter -n \
 -t $testplan \
 -q $EDCDIR/bin/edcuser.properties \
 -L jmeter.util.BeanShellTestElement=$BEANSHELL_LOGLEVEL \
@@ -25,6 +24,22 @@ jmeter -n \
 -Jsummariser.out=true \
 -Juser.classpath=$USERCLASSPATH \
 -Jsearch_paths=$EDCDIR/codebase/JDBCListener.jar \
--Juser.dir=$EDCDIR >> $filename.tmp
+-Juser.dir=$EDCDIR)
+
+#jmeter -n \
+#-t $testplan \
+#-q $EDCDIR/bin/edcuser.properties \
+#-L jmeter.util.BeanShellTestElement=$BEANSHELL_LOGLEVEL \
+#-j /tmp/jmeter.log \
+#-l /tmp/jmeter_samples.log \
+#-Jjmeterengine.nongui.port=0 \
+#-Jsummariser.name=summary \
+#-Jsummariser.interval=100 \
+#-Jsummariser.out=true \
+#-Juser.classpath=$USERCLASSPATH \
+#-Jsearch_paths=$EDCDIR/codebase/JDBCListener.jar \
+#-Juser.dir=$EDCDIR >> $filename.tmp
+
+echo $jmeter_output >> $filename.tmp
 
 mv $filename.tmp $filename.fnsh

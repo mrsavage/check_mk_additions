@@ -10,7 +10,8 @@
 #: Note        : This script requiers JMeter to be installed
 
 # define variables
-plans_dir="../jmeter_plans"
+plans_dir="jmeter_plans"
+wc_plans_dir="jmeter_wc_plans"
 DIRECTORY=$(cd `dirname $0` && pwd)
 
 # function      : iterate_testplans() 
@@ -23,6 +24,11 @@ iterate_testplans()
     do
         run_jmeter $file
     done
+
+    for file in $wc_plans_dir/*
+    do
+        run_wc_jmeter $file
+    done
 }
 
 # function     : run_jmeter()
@@ -33,6 +39,13 @@ run_jmeter()
     testplan=$1
     filename=`basename $testplan`
     $DIRECTORY/jmeter_runner $testplan $filename &
+}
+
+run_wc_jmeter()
+{
+    testplan=$1
+    filename=`basename $testplan`
+    $DIRECTORY/jmeter_wc_runner $testplan $filename &
 }
 
 # check if jmeter for testplans is already running by checking if file running.txt exists
